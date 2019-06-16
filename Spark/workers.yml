@@ -1,0 +1,10 @@
+purchase_type: on_demand
+subnet_id: subnet-0eec28a541a2e7db4
+num_instances: 3
+key_name: forest-pfeiffer-IAM-keypair
+security_group_ids: sg-0e94db96fdcdf9c40
+instance_type: m4.large
+tag_name: spark-cluster
+vol_size: 100
+role: worker
+use_eips: true
