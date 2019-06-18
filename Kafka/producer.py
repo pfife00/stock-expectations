@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ############################################################
 # Author: Forest Pfeiffer
 #Based on producer.py written by Ryan Hebel during Insight DE
@@ -56,7 +57,7 @@ def main():
                                 #print(output)
                                 producer.send('rawDBGData', output.encode())
                                 producer.flush()
-        producer.close()
+        #producer.close()
         return
 
 if __name__ == '__main__':

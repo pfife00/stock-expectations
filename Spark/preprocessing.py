@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+import os
+os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.0.2 pyspark-shell'
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
@@ -19,7 +22,9 @@ def main():
                     'ec2-50-112-13-159.us-west-2.compute.amazonaws.com:9092'})
     #parse the row into separate components
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
-    print(filteredStream)
-    return
+    #identify the stocks that we would like to buy (those with increasing price) and calculate number of shares to purchase
+    buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
+    ssc.start()
+    ssc.awaitTermination()
 if __name__ == '__main__':
         main()
