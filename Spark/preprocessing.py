@@ -15,8 +15,8 @@ def main():
     #Provides methods used to create Dstreams from various input source
     #Note: metadata.broker.list might be depreciated and need to be replaced
     #with bootstrap.servers
-    ssc = StreamingContext(sc, 5)
-    #set offsets
+    ssc = StreamingContext(sc, 1)
+    #set kafka offsets
     topic = 'rawDBGData'
     partition = 0
     start = 0
@@ -29,6 +29,7 @@ def main():
     kafkaStream = KafkaUtils.createDirectStream(ssc,
                     ['rawDBGData'], {'metadata.broker.list':
                     'ec2-35-163-92-177.us-west-2.compute.amazonaws.com:9092, ec2-50-112-13-159.us-west-2.compute.amazonaws.com:9092, ec2-54-149-111-92.us-west-2.compute.amazonaws.com:9092'}, fromOffsets = fromoffset)
+    kafkaStream.pprint()
     #parse the row into separate components
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
     filteredStream.pprint()
