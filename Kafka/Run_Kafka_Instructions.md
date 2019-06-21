@@ -17,8 +17,8 @@ Configure as desribed below<br>
 The id of the broker. This must be set to a unique integer for each broker.<br>
 <b>broker.id=0 </b><br>
 
-increment this number for each node. 
-e.g. If you are on the first node broker.id=0, 
+increment this number for each node.
+e.g. If you are on the first node broker.id=0,
 if you’re on the second node broker.id=1 and so on. <br>
 
 Zookeeper connection string (see zookeeper docs for details).
@@ -47,7 +47,7 @@ First start a zookeeper instance
 
 Now start kafka server
 <code>bin/kafka-server-start.sh config/server.properties</code>
-    
+
 <h3>Create a topic</h3>
 Let's create a topic named "test" with a single partition and only one replica
 
@@ -78,8 +78,5 @@ Now try to publish messages on another node<br>
 Finally, go back to any node to view the message
 <code>/usr/local/kafka/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --from-beginning --topic my-topic</code><br>
 
-
-
-```python
-
-```
+To list all topics run the following command from any node <br>
+<code>bin/kafka-topics.sh --list --zookeeper localhost:2181</code><br>

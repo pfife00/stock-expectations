@@ -29,17 +29,17 @@ def main():
     #                'ec2-50-112-13-159.us-west-2.compute.amazonaws.com:9092'})
     kafkaStream = KafkaUtils.createDirectStream(ssc,
                     ['rawDBGData'], {'metadata.broker.list':
-                    'ec2-35-163-92-177.us-west-2.compute.amazonaws.com:9092, ec2-50-112-13-159.us-west-2.compute.amazonaws.com:9092, ec2-54-149-111-92.us-west-2.compute.amazonaws.com:9092'}, fromOffsets = fromoffset)
+                    '10.0.0.11:9092, 10.0.0.9:9092, 10.0.0.4:9092'}, fromOffsets = fromoffset)
 
     #parse the row into separate components
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
-    #filteredStream.pprint()
+    filteredStream.pprint()
     #identify the stocks that we would like to buy (those with increasing price) and calculate number of shares to purchase
     buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
     #buy.pprint()
     #Set entry point for working with structured data (rows and columns)
     sqlContext = SQLContext(sc)
-    #sqlContext.show()
+
     ssc.start()
     ssc.awaitTermination()
 
