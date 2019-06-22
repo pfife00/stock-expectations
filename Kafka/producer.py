@@ -24,7 +24,7 @@ def main():
 
         #read credentials from dwg.cfg file (note this file will not be stored
         #on github for security reasons)
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read('dwh.cfg')
         AWS_ACCESS_KEY_ID = config.get('AWS', 'KEY')
         AWS_SECRET_ACCESS_KEY = config.get('AWS', 'SECRET')
