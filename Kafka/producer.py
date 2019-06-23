@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-############################################################
-# Author: Forest Pfeiffer
+#Author: Forest Pfeiffer
 #Based on producer.py written by Ryan Hebel during Insight DE
 #2018C session
 
@@ -10,7 +8,7 @@
 
 #to install boto3, run the following command:
 #pip install boto3
-
+import ConfigParser
 from kafka import KafkaProducer
 import time
 import boto3
@@ -24,7 +22,7 @@ def main():
 
         #read credentials from dwg.cfg file (note this file will not be stored
         #on github for security reasons)
-        config = configparser.ConfigParser()
+        config = ConfigParser.ConfigParser()
         config.read('dwh.cfg')
         AWS_ACCESS_KEY_ID = config.get('AWS', 'KEY')
         AWS_SECRET_ACCESS_KEY = config.get('AWS', 'SECRET')
@@ -32,14 +30,14 @@ def main():
         #creates bucket that points to data
         s3 = boto3.resource('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
         bucket = s3.Bucket('deutsche-boerse-xetra-pds')
-        #i=0
+        i=0
         #the deutsche-boerse-xetra-pds bucket contains a list of csv links that
         #point to data for each hour of trading
         #first, iterate through each object (link to csv) in the bucket
         for object in bucket.objects.all():
-                #i+=1
-                #if i == 200:
-                #        break
+                i+=1
+                if i == 200:
+                        break
                 #filter for non-trading hours (empty csv) by size
                 #files with size 136 bytes indicate off hours logging and
                 #should be ommitted
