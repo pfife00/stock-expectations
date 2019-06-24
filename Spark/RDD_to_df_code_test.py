@@ -42,36 +42,41 @@ def process(time, rdd):
         pass
 
 if __name__ == "__main__":
-    #if len(sys.argv) != 3:
-    #    print("Usage: sql_network_wordcount.py <hostname> <port> ", file=sys.stderr)
-    #    exit(-1)
-    #host, port = sys.argv[1:]
-    sc = SparkContext(appName="PythonSqlNetworkWordCount")
-    ssc = StreamingContext(sc, 5)
-    #sc.setCheckpointDir("hdfs://master:9000/RddCheckPoint")
-    #ssc.checkpoint(checkpointDirectory)  a# set checkpoint directory
-    #context = StreamingContext.getOrCreate(checkpointDirectory, functionToCreateContext)
-    topic = 'rawDBGData'
-    partition = 0
-    start = 0
-    topicpartition = TopicAndPartition(topic, partition)
-    fromoffset = {topicpartition: int(start)}
-    #parse the row into separate components
+    #specify batch duration and kafka ips
+    batch_duration = 5
+    kafka_ips = '10.0.0.11:9092, 10.0.0.9:9092, 10.0.0.6:9092'
 
-    kafkaStream = KafkaUtils.createDirectStream(ssc,
-                    ['rawDBGData'], {'metadata.broker.list':
-                    '10.0.0.11:9092, 10.0.0.9:9092, 10.0.0.4:9092'}, fromOffsets = fromoffset)
+    #Specify topic, offset and partition to read from kafka - this might not be
+    #necessary and so is commented out
+    #topic = "stockdataset"
+    #partition = 0
+    #start = 0
+    #topicpartition = TopicAndPartition(topic, partition)
+    #fromoffset = {topicpartition: int(start)}
 
-    #kafkaStream = KafkaUtils.createDirectStream(ssc,
-    #                ['rawDBGData'], {'metadata.broker.list':
-    #                '10.0.0.11:9092, 10.0.0.9:9092, 10.0.0.4:9092'})
+    #Entry point to spark context
+    spark_session = SparkSession \
+        .builder \
+        .appName("stocks_monitoring") \
+        .getOrCreate()
+    #set spark context
+    sc = spark_session.sparkContext
+    #Entry pont to spark streaming context
+    ssc = StreamingContext(sc, batch_duration)
 
-    #parse the row into separate components
+    #kafka API call
+    kafkaStream = KafkaUtils\
+                    .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
 
+    #Specify spark data window
     kafkaStream = kafkaStream.window(5)
-    filteredStream = kafkaStream.flatMap(lambda line: line[1].split("^"))
-    
+    #parse the row into separate components
+    filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
+    buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
 
+    sqlContext = SQLContext(sc)
+
+    #Pass RDD using foreachRDD function to process function to convert to dataframe
     filteredStream.foreachRDD(process)
 
     ssc.start()
