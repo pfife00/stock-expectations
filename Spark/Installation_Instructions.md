@@ -77,9 +77,9 @@ Set the listen address value to * <br>
 listen_addresses = '*' <br>
 
 Modify the pg_hba.conf file by adding:
-host    <database>      <user>       0.0.0.0/0        md5 <br>
+host    database      user      0.0.0.0/0        md5 <br>
 
 As a best practice, specify a database, user and a source IP.
 
-<h3>Step 3 Create a new user with a password for application access</h3>
+<h4>Step 3 Create a new user with a password for application access</h4>
 <code>postgres=# CREATE USER db_select WITH PASSWORD '<setpassword>';</code><br>
