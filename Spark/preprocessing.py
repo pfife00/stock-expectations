@@ -92,7 +92,7 @@ def main():
 
     sqlContext = SQLContext(sc)
     #use foreachPartition to reduce the number of database connections that are opened/closed
-    #buy.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
+    buy.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
 
     buy.pprint()
     ssc.start()
