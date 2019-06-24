@@ -11,6 +11,7 @@ from pyspark.sql.types import *
 import json
 from pyspark.sql import SparkSession
 import ConfigParser
+import psycopg2
 
 
 #Read config file to pass db credentials
@@ -23,9 +24,9 @@ DB_PASSWORD = config.get('DB', 'DB_PASSWORD')
 def sendToSQL(rdd):
         #connect to db and fetch all records in portfolio
         postgres_ip = "10.0.0.4"
-        db_name = "data_cache"
-        dbuser =
-        connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = 'DB_USER', password = 'DB_PASSWORD')
+        #create connection to database
+        connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = DB_USER, password = DB_PASSWORD)
+        #Allow Python code to execute PostgreSQL command in a database session
         cursor = connection.cursor()
         cursor.execute('SELECT * FROM portfolio')
         postgres = cursor.fetchall()
@@ -88,6 +89,8 @@ def main():
 
     ssc.start()
     ssc.awaitTermination()
+
+    return
 
 if __name__ == "__main__":
     main()
