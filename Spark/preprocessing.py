@@ -9,7 +9,7 @@ from pyspark.streaming import StreamingContext
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 import json
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, SQLContext
 import ConfigParser
 import psycopg2
 
@@ -28,7 +28,10 @@ def sendToSQL(rdd):
         connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = DB_USER, password = DB_PASSWORD)
         #Allow Python code to execute PostgreSQL command in a database session
         cursor = connection.cursor()
+        #Execute a database operation (query or command)
         cursor.execute('SELECT * FROM portfolio')
+        #Fetch all (remaining) rows of a query result, returning them as a list
+        #of tuples. An empty list is returned if there is no more record to fetch.
         postgres = cursor.fetchall()
 
         #for each sell order in current rdd
@@ -52,6 +55,7 @@ def main():
     Apply ETL on Spark Stream
     """
     batch_duration = 5
+    #Initiate spark session
     spark_session = SparkSession \
         .builder \
         .appName("stocks_monitoring") \
@@ -80,13 +84,17 @@ def main():
                     .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
 
     #window the data
-    kafkaStream_window = kafkaStream.window(5)
+    #kafkaStream_window = kafkaStream.window(5)
     #parse the row into separate components
-    filteredStream = kafkaStream_window.flatMap(lambda line: line[1].split("^"))
+    #filteredStream = kafkaStream_window.flatMap(lambda line: line[1].split("^"))
+    filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
+    buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
 
+    sqlContext = SQLContext(sc)
     #use foreachPartition to reduce the number of database connections that are opened/closed
-    filteredStream.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
+    #buy.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
 
+    buy.pprint()
     ssc.start()
     ssc.awaitTermination()
 
