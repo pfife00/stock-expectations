@@ -4,7 +4,7 @@
 from __future__ import print_function
 import sys
 
-from pyspark.streaming.kafka import KafkaUtils, TopicAndPartition
+from pyspark.streaming.kafka import KafkaUtils
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.sql.functions import *
@@ -56,6 +56,9 @@ def main():
     Apply ETL on Spark Stream
     """
     batch_duration = 5
+    topic = "stockdataset"
+    kafka_ips = '10.0.0.11:9092, 10.0.0.9:9093, 10.0.0.6:9094'
+    #kafka_ips = '10.0.0.11:9092'
     #Initiate spark session
     spark_session = SparkSession \
         .builder \
@@ -67,37 +70,40 @@ def main():
 
     #Create streaming context
     ssc = StreamingContext(sc, batch_duration)
-    #sqlContext = SQLContext(sc)
 
-    topic = "stockdataset"
-    partition = 0
-    start = 0
-    topicpartition = TopicAndPartition(topic, partition)
-    fromoffset = {topicpartition: int(start)}
+    #partition = 0
+    #start = 0
+    #topicpartition = TopicAndPartition(topic, partition)
+    #fromoffset = {topicpartition: int(start)}
     #parse the row into separate components
-    kafka_ips = '10.0.0.11:9092, 10.0.0.9:9092, 10.0.0.6:9092'
-    kafkaStream = KafkaUtils.createDirectStream(ssc,
-                    [topic], {'metadata.broker.list':
-                    kafka_ips}, fromOffsets = fromoffset)
+
+    #kafkaStream = KafkaUtils.createDirectStream(ssc,
+    #                [topic], {'metadata.broker.list':
+    #                kafka_ips, 'auto.offset.reset':'smallest'})
 
     #read from kafka
     kafkaStream = KafkaUtils\
-                    .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
-
+            .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
+#
     sqlContext = SQLContext(sc)
     #window the data
-    #kafkaStream_window = kafkaStream.window(5)
+    #kafkaStream_window = kafkaStream.window(100)
     #parse the row into separate components
-    #filteredStream = kafkaStream_window.flatMap(lambda line: line[1].split("^"))
+    #filteredStream = kafkaStream_window.map(lambda line: line[1].split("^"))
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
     #filteredStream.pprint()
-    buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
-    buy.pprint()
+    buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8]))
+                                > 0.0).map(lambda line: [line[1], line[6],
+                                line[7], line[8], int(1000*(float(line[11])
+                                 - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
+    #filteredStream.pprint()
     #use foreachPartition to reduce the number of database connections that are opened/closed
     #buy.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
     #buy_df = sqlContext.createDataFrame(buy)
-    #buy.foreachRDD(lambda rdd: rdd.toDF().show())
 
+    buy.foreachRDD(lambda rdd: rdd.toDF().show())
+    #sparkdf = SparkDFdatasource.get_batch("my_hourly_batch", "s3a://my_bucket/my_files/hourly_data.csv")
+    #implement jdbc
     ssc.start()
     ssc.awaitTermination()
 
