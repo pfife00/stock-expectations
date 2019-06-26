@@ -1,5 +1,5 @@
 
-<h1>AutoAlert</h1>
+<h1>Stock Expectations</h1>
 
 <h3>Project Description</h3>
 Current autoML tools (such as DataRobot and H2O serverless AI) have enabled faster model building and easier model deployment.
