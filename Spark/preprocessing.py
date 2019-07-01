@@ -66,19 +66,12 @@ def sendToSQL(df_orig, df_convert):
     #Allow Python code to execute PostgreSQL command in a database session
     #convert json to string
     #this does something
-    #print(test_json['results'])
     #new_json = json.dumps(test_json)
     #python_obj = json.loads(new_json)
     #jn = json_normalize(python_obj)
     #df_columns = list(jn)
     #columns = ",".join(df_columns)
 
-    # create VALUES('%s', '%s",...) one '%s' per column
-    #values = "VALUES({})".format(",".join(["%s" for _ in df_columns]))
-
-    #print(python_obj)
-    #my_data=[]
-    #json_fields = ['results', 'success', 'statistics']
     #this works!!!
     #connection = psycopg2.connect(host = postgres_ip, port=5432, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
     #cursor = connection.cursor()
@@ -86,19 +79,6 @@ def sendToSQL(df_orig, df_convert):
     #cursor.execute('DROP TABLE IF EXISTS data_table;')
     #cursor.execute('CREATE TABLE data_table(test_json json);')
     #cursor.execute('INSERT INTO data_table(results, success, statistics)'
-
-    #for item in test_json:
-        #print(test_json['results'])
-
-
-    #conn = engine.raw_connection()
-    #cur = conn.cursor()
-    #output = io.StringIO()
-    #conn.commit()
-    #conn.close()
-    #cursor.execute('CREATE TABLE IF NOT EXISTS data_table(results VARCHAR, success VARCHAR, statistics VARCHAR);')
-    #cursor.execute('create table data_cache(test_json JSONB[]);')
-    #test - delete this!!
 
     #query = 'INSERT INTO data_cache VALUES (%s)'
     #data = (test_json['results'])
@@ -177,22 +157,6 @@ def ge_validation(rdd):
     #This works!!!!
     sendToSQL(df, df_convert)
 
-
-    #my_expectations_config = json.load(file("test_json.json"))
-    #print(my_expectations_config)
-    #mini_batch_suite = sdf.save_expectations_config("my_stock_expectations.json")
-    #conn = initDbConnection()
-    #conn.write(test_json, "data_cache", "append")
-    #writeToPostgres(sdf, "data_cache", "append")
-    #sdf.validate(expectations_suite=mini_batch_suite)
-    #run ge_validation
-    #sdf.validate(expectations_suite=mini_batch_suite)
-    #try:
-        #try to loop through rdd code
-
-    #except ValueError:
-    #    print("No data!!!")
-
 def convert_df(my_dict):
     """
     This function takes my_dict as input, converts to a dataframe and parses
@@ -267,18 +231,11 @@ def main():
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
 
     #filter_s = filteredStream.filter(lambda line: line[1], line[2]).pprint()
-    #buy.pprint()
-    #use foreachPartition to reduce the number of database connections that are opened/closed
-    #buy.foreachRDD(lambda rdd: rdd.foreachPartition(sendToSQL))
-
-    #This does not work!!!!
-    #buy_df = sqlContext.createDataFrame(buy)
 
     #this works for real but don't need it!!!
     #buy.foreachRDD(lambda rdd: rdd.toDF().show())
     #pass to GE validation function - this works
     #filteredStream.foreachRDD(lambda rdd: rdd.foreachPartition(ge_validation))
-    #buy.foreachRDD(ge_validation)
     filteredStream.foreachRDD(ge_validation)
     #this line works!!!
     #new_df = filteredStream.foreachRDD(lambda rdd: rdd.toDF())
