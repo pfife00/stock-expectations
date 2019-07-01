@@ -1,6 +1,5 @@
 #!/usr/bin/env python3#
 #
-
 from __future__ import print_function
 import sys
 from psycopg2.extras import Json
@@ -14,11 +13,14 @@ import json
 from pyspark.sql import SparkSession, SQLContext, Row
 import configparser
 import great_expectations as ge
-import PostgreSQLConnect
+#import PostgreSQLConnect
 import psycopg2
 import pandas as pd
-#from sqlalchemy import create_engine
+from sqlalchemy import create_engine
+import sqlalchemy as sa
 import psycopg2.extras
+from models import Cache
+from models_orig import CacheOrig
 
 #Read config file to pass db credentials
 config = configparser.ConfigParser()
@@ -26,32 +28,57 @@ config.read('dwh.cfg')
 DB_NAME = config.get('DB', 'DB_NAME')
 DB_USER = config.get('DB', 'DB_USER')
 DB_PASSWORD = config.get('DB', 'DB_PASSWORD')
+DB_HOST_NAME = config.get('DB', 'DB_HOST_NAME')
+DATABASE_URI = config.get('DB', 'DATABASE_URI')
 
-def sendToSQL(test_json):
+def sendToSQL(df_orig, df_convert):
     #connect to db and fetch all records in portfolio
-    postgres_ip = '10.0.0.4'
+    #convert spark dataframe of original data to pandas dataset
+    pdsDF = df_orig.toPandas()
+    #delete the ip address
+    #postgres_ip = '10.0.0.4'
+    DATABASE_URI = config.get('DB', 'DATABASE_URI')
+    #connect to db
+    #Stupid but this seems to work!!!!!
+    DATABASE_URI = DATABASE_URI
+    engine = create_engine(DATABASE_URI)
 
+    #This will drop all tables - be careful!!!!!!!!!!!!!!
+    Cache.metadata.drop_all(engine)
+
+    CacheOrig.metadata.drop_all(engine)
+    #Cache.metadata.create_all(engine)
+    #This works!!!!!!!!!!
+    #df.to_sql('data_cache', engine)
+    #df_orig.to_sql('data_table2', engine)
+    df_convert.to_sql('validation_results', engine)
+    pdsDF.to_sql('data_cache', engine)
+    #query table
+    rows_valid = engine.execute("select * from validation_results").fetchall()
+    rows_data = engine.execute("select * from data_cache").fetchall()
+    #print(rows_valid)
+    #print(rows_data)
+    #this connects!!!!!!!!!!!
+    #print("Successs!!!!!!!!!!!!!!!!!!!!!!!")
     #print(test_json)
     #create connection to database
-    #df = pd.DataFrame.from_dict(eval(test_json), orient='columns')
-    #print(df)
     #connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = DB_USER, password = DB_PASSWORD)
     #Allow Python code to execute PostgreSQL command in a database session
     #convert json to string
     #this does something
     #print(test_json['results'])
-    new_json = json.dumps(test_json)
-    python_obj = json.loads(new_json)
-    jn = json_normalize(python_obj)
-    df_columns = list(jn)
-    columns = ",".join(df_columns)
+    #new_json = json.dumps(test_json)
+    #python_obj = json.loads(new_json)
+    #jn = json_normalize(python_obj)
+    #df_columns = list(jn)
+    #columns = ",".join(df_columns)
 
     # create VALUES('%s', '%s",...) one '%s' per column
-    values = "VALUES({})".format(",".join(["%s" for _ in df_columns]))
+    #values = "VALUES({})".format(",".join(["%s" for _ in df_columns]))
 
     #print(python_obj)
-    my_data=[]
-    json_fields = ['results', 'success', 'statistics']
+    #my_data=[]
+    #json_fields = ['results', 'success', 'statistics']
     #this works!!!
     #connection = psycopg2.connect(host = postgres_ip, port=5432, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
     #cursor = connection.cursor()
@@ -90,52 +117,16 @@ def sendToSQL(test_json):
     #        data = (2,3)
     #    cursor.execute(query, data)
 
-    # preparing geometry json data for insertion
+    #connection.commit()
+    #connection.close()
 
-    with psycopg2.connect(host = postgres_ip, port=5432, database=DB_NAME, user=DB_USER, password=DB_PASSWORD) as conn:
-        with conn.cursor() as cursor:
-            query = """
-                INSERT into
-                    data_table
-                    (success, exception_info, expectation_config, result)
-                VALUES
-                    (%(success)s, %(exception_info)s, %(expectation_config)s, %(result)s);
-            """
-            cursor.executemany(query, test_json)
-
-        conn.commit()
-        #my_data = {field: item[field] for field in json_fields}
-        #cur.execute("INSERT INTO data_cache VALUES (%s)", (json.dumps(my_data),))
-    #query = '''INSERT INTO data_cache (noaa_id, latitude, longitude, elevation, state, name) VALUES(%s,%s,%s,%s,%s,%s);'''
-    #query = INSERT INTO 'data_cache' VALUES (%s, %s, %s, %s, %s)
-    #cursor.execute(query, data)
-    #Execute a database operation (query or command)
-    #cursor.execute('SELECT * FROM data_cache')
-    #Fetch all (remaining) rows of a query result, returning them as a list
-    #of tuples. An empty list is returned if there is no more record to fetch.
-    #postgres = cursor.fetchall()
-
-    #for each sell order in current rdd
-    #for line in rdd:
-    #        for row in postgres:
-                    #if the stock is owned, record the transaction and remove the stock from your portfolio
-    #                if line[0] == row[0]:
-    #                        query = 'INSERT INTO transactions VALUES (%s, %s, %s, %s, %s)'
-    #                        data = (line[0], line[1], line[2], line[3], -1*int(row[2]))
-    #                        cursor.execute(query, data)
-    #                        query = 'DELETE FROM portfolio WHERE ticker = %s'
-    #                        data = (line[0],)
-    #                        cursor.execute(query, data)
-    #                        break;
-    connection.commit()
-    connection.close()
-
-def initDbConnection():
-    """
-    Function to create PostgreSQL connection
-    """
-    conn = PostgreSQLConnect.PostgreSQLConnect()
-    return conn
+#maybe remove this function
+#def initDbConnection():
+#    """
+#    Function to create PostgreSQL connection
+#    """
+#    conn = PostgreSQLConnect.PostgreSQLConnect()
+#    return conn
 
 #def writeToPostgres(df, table, mode):
 #    """
@@ -165,22 +156,28 @@ def ge_validation(rdd):
     #print(json.dumps(sdf.expect_column_to_exist("key"))) #test, does col have key
     #print(json.dumps(sdf.expect_column_to_exist("_4"))) #test, does col have _4
     #test_json = json.dumps(sdf.expect_column_mean_to_be_between("_4", -100, 100, result_format="SUMMARY"))
-    sdf.expect_column_to_exist("MAX_PRICE")
-    sdf.expect_column_max_to_be_between("MAX_PRICE", 200, 500, result_format="SUMMARY")
+    sdf.expect_column_to_exist("MAX_PRICE", result_format="SUMMARY")
+    sdf.expect_column_max_to_be_between("MAX_PRICE", 1, 500, result_format="BOOLEAN_ONLY")
+    #sdf.expect_column_values_to_be_between("START_PRICE", 0, 1000, result_format="BOOLEAN_ONLY")
     #sdf.expect_column_values_to_be_between("START_PRICE", 0.5, 1000, result_format="SUMMARY")
-    sdf.expect_column_min_to_be_between("MIN_PRICE", 5, 100, result_format="SUMMARY")
-    #sdf.expect_column_to_exist("key")
-    #sdf.expect_column_to_exist("value")
-    #print(test_json)
+    sdf.expect_column_min_to_be_between("MIN_PRICE", 5, 100, result_format="BOOLEAN_ONLY")
+
     #Save expectations to json to load to validation
     #this one is old
-    sdf.save_expectations_config("test_json.json")
+    sdf.save_expectations_config("test_json.json", discard_failed_expectations=False)
     mini_batch_suite = json.load(open('test_json.json', 'r'))
 
-    json_out = sdf.validate(mini_batch_suite)
+    my_dict = sdf.validate(mini_batch_suite)
 
+    #pass to convert to dataframe function results
+    #OMFG this works!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    df_convert = convert_df(my_dict)
+
+    #Pass converted dataframe from convert_df function to sql
     #This works!!!!
-    sendToSQL(json_out)
+    sendToSQL(df, df_convert)
+
+
     #my_expectations_config = json.load(file("test_json.json"))
     #print(my_expectations_config)
     #mini_batch_suite = sdf.save_expectations_config("my_stock_expectations.json")
@@ -195,6 +192,37 @@ def ge_validation(rdd):
 
     #except ValueError:
     #    print("No data!!!")
+
+def convert_df(my_dict):
+    """
+    This function takes my_dict as input, converts to a dataframe and parses
+    dict items in row to columns, then removes uncessary columns
+    returns new dataframe
+    """
+    #convert dictionary to dataframe from results column
+    df1 = pd.DataFrame(my_dict["results"])
+    #Parse exception_info into new columns and drop exception_info
+    df1[['raised_exception', 'exception_message', 'exception_traceback']] = df1.exception_info.apply(pd.Series)
+    df2 = df1.drop('exception_info', axis=1)
+
+    #Parse expectation_config into new columns and drop expectation_config
+    df2[['expectation_type', 'kwargs']] = df2.expectation_config.apply(pd.Series)
+    df3 = df2.drop('expectation_config', axis=1)
+
+    #Parse results into new columns and drop expectation_config - have to use this
+    #method as result has different lengths depending on expectation
+    df4 = df3.result.apply(pd.Series).merge(df3, left_index = True, right_index = True)
+
+    #drop unecesary columns
+    df5 = df4.drop(['element_count', 'missing_count', 'missing_percent', 'result', 'exception_traceback'], axis=1)
+
+    #parse kwargs to columns
+    df6 = df5.kwargs.apply(pd.Series).merge(df3, left_index = True, right_index = True)
+
+    #drop more unecesary columns
+    df7 = df6.drop(['result', 'kwargs', 'exception_traceback'], axis=1)
+
+    return df7
 
 def main():
     """
@@ -237,10 +265,7 @@ def main():
     #parse the row into separate components
     #filteredStream = kafkaStream_window.map(lambda line: line[1].split("^"))
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
-    #buy = filteredStream.filter(lambda line: (float(line[11]) - float(line[8])) > 0.0).map(lambda line: [line[1], line[6], line[7], line[8], int(1000*(float(line[11]) - float(line[8]))/float(line[8]))]).filter(lambda line: line[4] > 0)
-    #filtered = filteredStream.filter(lambda line: line[1])#, line[2], line[6], line[7],
-                                        #line[8], line[9], line[10], line[11], line[12],
-                                        #lin3[13], line[14])
+
     #filter_s = filteredStream.filter(lambda line: line[1], line[2]).pprint()
     #buy.pprint()
     #use foreachPartition to reduce the number of database connections that are opened/closed
@@ -260,9 +285,6 @@ def main():
     #print(new_df)
     #ge_validation(new_df)
 
-
-
-    #implement jdbc
     ssc.start()
     ssc.awaitTermination()
 
