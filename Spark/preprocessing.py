@@ -45,9 +45,9 @@ def sendToSQL(df_orig, df_convert):
 
     #This will drop all tables - be careful!!!!!!!!!!!!!!
     Cache.metadata.drop_all(engine)
-
     CacheOrig.metadata.drop_all(engine)
     #Cache.metadata.create_all(engine)
+    #CacheOrig.metadata.create_all(engine)
     #This works!!!!!!!!!!
     #df.to_sql('data_cache', engine)
     #df_orig.to_sql('data_table2', engine)
@@ -56,11 +56,7 @@ def sendToSQL(df_orig, df_convert):
     #query table
     rows_valid = engine.execute("select * from validation_results").fetchall()
     rows_data = engine.execute("select * from data_cache").fetchall()
-    #print(rows_valid)
-    #print(rows_data)
-    #this connects!!!!!!!!!!!
-    #print("Successs!!!!!!!!!!!!!!!!!!!!!!!")
-    #print(test_json)
+
     #create connection to database
     #connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = DB_USER, password = DB_PASSWORD)
     #Allow Python code to execute PostgreSQL command in a database session
@@ -129,8 +125,6 @@ def ge_validation(rdd):
     df = df.withColumn("MAX_PRICE", df["MAX_PRICE"].cast(FloatType()))
     df = df.withColumn("MIN_PRICE", df["MAX_PRICE"].cast(FloatType()))
 
-    #conn = initDbConnection()
-    #conn.write(buy_df, "data_cache", "append")
     sdf = ge.dataset.SparkDFDataset(df)
     #print(json.dumps(sdf.expect_column_to_exist("value"))) #est, does col have value
     #print(json.dumps(sdf.expect_column_to_exist("key"))) #test, does col have key
@@ -192,7 +186,7 @@ def main():
     """
     Apply ETL on Spark Stream
     """
-    batch_duration = 5
+    batch_duration = 1
     topic = "stockdataset"
     #put these ips in a separate class when do code cleanup
     kafka_ips = '10.0.0.11:9092, 10.0.0.9:9093, 10.0.0.6:9094'
@@ -230,17 +224,11 @@ def main():
     #filteredStream = kafkaStream_window.map(lambda line: line[1].split("^"))
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
 
-    #filter_s = filteredStream.filter(lambda line: line[1], line[2]).pprint()
-
     #this works for real but don't need it!!!
     #buy.foreachRDD(lambda rdd: rdd.toDF().show())
     #pass to GE validation function - this works
     #filteredStream.foreachRDD(lambda rdd: rdd.foreachPartition(ge_validation))
     filteredStream.foreachRDD(ge_validation)
-    #this line works!!!
-    #new_df = filteredStream.foreachRDD(lambda rdd: rdd.toDF())
-    #print(new_df)
-    #ge_validation(new_df)
 
     ssc.start()
     ssc.awaitTermination()
