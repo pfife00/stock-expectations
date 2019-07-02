@@ -32,43 +32,36 @@ DB_HOST_NAME = config.get('DB', 'DB_HOST_NAME')
 DATABASE_URI = config.get('DB', 'DATABASE_URI')
 
 def sendToSQL(df_orig, df_convert):
+    """
+    This function takes the spark dataframe and the parsed GE validatin output
+    as input and stores the results to PostgreSQL
+    """
     #connect to db and fetch all records in portfolio
     #convert spark dataframe of original data to pandas dataset
     pdsDF = df_orig.toPandas()
-    #delete the ip address
-    #postgres_ip = '10.0.0.4'
     DATABASE_URI = config.get('DB', 'DATABASE_URI')
+
     #connect to db
-    #Stupid but this seems to work!!!!!
     DATABASE_URI = DATABASE_URI
     engine = create_engine(DATABASE_URI)
 
     #This will drop all tables - be careful!!!!!!!!!!!!!!
     Cache.metadata.drop_all(engine)
     CacheOrig.metadata.drop_all(engine)
+
     #Cache.metadata.create_all(engine)
     #CacheOrig.metadata.create_all(engine)
-    #This works!!!!!!!!!!
-    #df.to_sql('data_cache', engine)
-    #df_orig.to_sql('data_table2', engine)
+
+    #pass dataframe to sql
     df_convert.to_sql('validation_results', engine)
     pdsDF.to_sql('data_cache', engine)
+
     #query table
     rows_valid = engine.execute("select * from validation_results").fetchall()
     rows_data = engine.execute("select * from data_cache").fetchall()
 
-    #create connection to database
-    #connection = psycopg2.connect(host = postgres_ip, database = DB_NAME, user = DB_USER, password = DB_PASSWORD)
-    #Allow Python code to execute PostgreSQL command in a database session
-    #convert json to string
-    #this does something
-    #new_json = json.dumps(test_json)
-    #python_obj = json.loads(new_json)
-    #jn = json_normalize(python_obj)
-    #df_columns = list(jn)
-    #columns = ",".join(df_columns)
 
-    #this works!!!
+    #this works but don't need it!!!
     #connection = psycopg2.connect(host = postgres_ip, port=5432, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
     #cursor = connection.cursor()
     #cursor.execute('DROP TABLE IF EXISTS json_cache;')
@@ -83,35 +76,17 @@ def sendToSQL(df_orig, df_convert):
 
     #query = 'INSERT INTO data_table VALUES (%s, %s, %s)'
     #data = (test_json['results'], test_json['success'], test_json['statistics'])
-    #print(data.type())
-        #    print(key, value)
     #cursor.execute(query, data)
-
-    #for item in test_json['results']:
-    #    for k,v in item.items():
-    #        query = 'INSERT INTO data_table(results) VALUES (%s)'
-    #        data = (2,3)
-    #    cursor.execute(query, data)
 
     #connection.commit()
     #connection.close()
 
-#maybe remove this function
-#def initDbConnection():
-#    """
-#    Function to create PostgreSQL connection
-#    """
-#    conn = PostgreSQLConnect.PostgreSQLConnect()
-#    return conn
-
-#def writeToPostgres(df, table, mode):
-#    """
-#    Function to write to PostgreSQL table
-#    Note: mode is the what data input should do, for example append
-#    """
-#    conn.write(df, table, mode)
-
 def ge_validation(rdd):
+    """
+    This function takes rdd data, converts to spark dataframe, then converts to
+    GE dataframe, runs the GE functions, and batches the data
+    """
+    #convert to spark df
     df = rdd.toDF()
     #rename df columns
     df = df.selectExpr("_1 as ISIN", "_2 as STOCK_TICKER", "_3 as SECURITY_DESC",
@@ -137,18 +112,15 @@ def ge_validation(rdd):
     sdf.expect_column_min_to_be_between("MIN_PRICE", 5, 100, result_format="BOOLEAN_ONLY")
 
     #Save expectations to json to load to validation
-    #this one is old
     sdf.save_expectations_config("test_json.json", discard_failed_expectations=False)
     mini_batch_suite = json.load(open('test_json.json', 'r'))
 
     my_dict = sdf.validate(mini_batch_suite)
 
     #pass to convert to dataframe function results
-    #OMFG this works!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     df_convert = convert_df(my_dict)
 
     #Pass converted dataframe from convert_df function to sql
-    #This works!!!!
     sendToSQL(df, df_convert)
 
 def convert_df(my_dict):
@@ -203,16 +175,6 @@ def main():
     #Create streaming context
     ssc = StreamingContext(sc, batch_duration)
 
-    #partition = 0
-    #start = 0
-    #topicpartition = TopicAndPartition(topic, partition)
-    #fromoffset = {topicpartition: int(start)}
-    #parse the row into separate components
-
-    #kafkaStream = KafkaUtils.createDirectStream(ssc,
-    #                [topic], {'metadata.broker.list':
-    #                kafka_ips, 'auto.offset.reset':'smallest'})
-
     #read from kafka
     kafkaStream = KafkaUtils\
             .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
@@ -224,10 +186,6 @@ def main():
     #filteredStream = kafkaStream_window.map(lambda line: line[1].split("^"))
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
 
-    #this works for real but don't need it!!!
-    #buy.foreachRDD(lambda rdd: rdd.toDF().show())
-    #pass to GE validation function - this works
-    #filteredStream.foreachRDD(lambda rdd: rdd.foreachPartition(ge_validation))
     filteredStream.foreachRDD(ge_validation)
 
     ssc.start()
