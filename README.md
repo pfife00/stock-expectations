@@ -23,7 +23,13 @@ Employing Great Expectations in a streaming environment proved to be a challengi
 
  <h3>Tech Stack</h3>
 S3, Kafka, Spark, Great Expectations, PostgreSQL, Dash<br>
+
+
 ![StockExpectations (1)](https://user-images.githubusercontent.com/17607212/60687570-2d926d80-9e64-11e9-82f7-05a18168d314.jpg)
+
+
+
+
 
 
 
