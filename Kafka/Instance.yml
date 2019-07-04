@@ -1,8 +1,8 @@
 purchase_type: on_demand
-subnet_id: subnet-0eec28a541a2e7db4
+subnet_id: subnet_id
 num_instances: 3
-key_name: forest-pfeiffer-IAM-keypair
-security_group_ids: sg-0e94db96fdcdf9c40
+key_name: key_name
+security_group_ids: security_group_ids
 instance_type: m4.large
 tag_name: kafka-cluster
 vol_size: 100
