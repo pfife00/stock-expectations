@@ -2,7 +2,8 @@
 
 <h1>Stock Expectations: Anomaly detection using Great Expectations</h1>
 
-Insert slide screenshot
+![StockExpectations](https://user-images.githubusercontent.com/17607212/60687481-b52bac80-9e63-11e9-8b01-775a46686e66.jpg)
+
 
 <h3>Project Description</h3>
 There is an inherent belief in the stock mark that the price of stocks should fully
