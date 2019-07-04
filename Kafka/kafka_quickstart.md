@@ -34,8 +34,3 @@ Run the command below to read from console<br>
 <h4>Run Producer</h4>
 Use the below code to run the producer<br>
 <code>/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic price --from-beginning</code>
-
-
-```python
-
-```
