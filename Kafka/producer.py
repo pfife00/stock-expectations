@@ -1,11 +1,7 @@
 #!/usr/bin/env python3#
 #Author: Forest Pfeiffer
-#Based on producer.py written by Ryan Hebel during Insight DE
-#2018C session
-
 #Create a Kafka producer
 # that reads data from a S3 bucket and sends it to a topic.
-############################################################
 
 #to install boto3, run the following command:
 #pip install boto3
@@ -22,9 +18,6 @@ def main():
     #create Kafka producer that communicates with master node of ec2 instance running Kafka
     producer = KafkaProducer(bootstrap_servers = 'localhost:9092')
 
-    #producer = KafkaProducer(bootstrap_servers='localhost:9092',
-    #                   value_serializer=lambda x: dumps(x).encode('utf-8'),
-    #                   key_serializer=lambda x: dumps(x).encode('utf-8'))
     #read credentials from dwg.cfg file (note this file will not be stored
     #on github for security reasons)
     config = ConfigParser.ConfigParser()
@@ -35,15 +28,11 @@ def main():
     #creates bucket that points to data
     s3 = boto3.resource('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
     bucket = s3.Bucket('deutsche-boerse-xetra-pds')
-    #i=0
+
     #the deutsche-boerse-xetra-pds bucket contains a list of csv links that
     #point to data for each hour of trading
     #first, iterate through each object (link to csv) in the bucket
     for object in bucket.objects.all():
-
-        #if i == 400:
-        #    break
-        #i+=1
 
             #filter for non-trading hours (empty csv) by size
             #files with size 136 bytes indicate off hours logging and
@@ -52,7 +41,7 @@ def main():
             url = 'https://s3.eu-central-1.amazonaws.com/deutsche-boerse-xetra-pds/' + object.key
 
             data = pd.read_csv(url)
-            #print(data)
+
             #read through each line of csv and send the line to the kafka topic
             #files with size 136 bytes indicate off hours logging and
             #should be ommitted
@@ -60,10 +49,9 @@ def main():
                 output = ''
                 for element in row:
                     output = output + str(element) + "^"
-                #print(output)
 
-                producer.send(topic='stockdataset', value=output.encode('utf8 '))
-                #producer.flush()
+                producer.send(topic='stockdataset', value=output.encode())
+                producer.flush()
         #producer.close()
     return
 
