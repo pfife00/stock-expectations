@@ -22,8 +22,9 @@ Employing Great Expectations in a streaming environment proved to be a challengi
 
 
  <h3>Tech Stack</h3>
-S3, Kafka, Spark, Great Expectations, PostgreSQL, Dash
-![StockExpectations (1)](https://user-images.githubusercontent.com/17607212/60687537-edcb8600-9e63-11e9-8fa3-73b6f1f4607d.jpg)
+S3, Kafka, Spark, Great Expectations, PostgreSQL, Dash<br>
+
+
 
 <h3>Datasets</h3>
 The Deutsche Börse Public Dataset is a near real-time streaming stock data dataset stored in an external S3 bucket. The data dictionary for the data can be viewed in the dataset's <a href="https://github.com/Deutsche-Boerse/dbg-pds">Github repo</a>.<br>
