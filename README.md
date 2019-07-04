@@ -17,6 +17,8 @@ To help answer this question, I employed the Great Expectations library which ap
 <code>sdf.expect_column_max_to_be_between("MAX_PRICE", 1, 500, result_format="BOOLEAN_ONLY")</code><br>
 This expectation applies the expecation to the data that the maxiumum price should not be greater than 500 or less than 1. If that expectation is not met, then the user is provided a flag (see dashboard image) to take appropriate action.
 
+
+
  <h3>Engineering Challenge</h3>
 Employing Great Expectations in a streaming environment proved to be a challenging task as it does not currently support a streaming environment. To overcome this challenge, several data processing steps within spark had to be performed in order utilize Great Expectations. 
 
