@@ -38,4 +38,26 @@ S3, Kafka, Spark, Great Expectations, PostgreSQL, Dash<br>
 
 <h3>Datasets</h3>
 The Deutsche Börse Public Dataset is a near real-time streaming stock data dataset stored in an external S3 bucket. The data dictionary for the data can be viewed in the dataset's <a href="https://github.com/Deutsche-Boerse/dbg-pds">Github repo</a>.<br>
+<h3>Data Dictionary</h3>
+
+The Xetra data is an S3 bucket stored at the following location:<br>
+s3://deutsche-boerse-xetra-pds <br>
+
+Each Xetra csv file within the bucket is defined as follows<br>
+<ul>
+    <li><b>ISIN</b> ISIN of the security:	string</li>
+    <li><b>Mnemonic</b>	Stock exchange ticker symbol:	string</li>
+<li><b>SecurityDesc</b>	Description of the security:	string</li>
+<li><b>SecurityType</b>	Type of security:	string</li>
+<li><b>Currency</b>	Currency in which the product is traded	ISO 4217: string (see https://en.wikipedia.org/wiki/ISO_4217)</li>
+<li><b>SecurityID</b>	Unique identifier for each contract:	int</li>
+<li><b>Date</b>	Date of trading period:	date</li>
+<li><b>Time</b>	Minute of trading to which this entry relates:	time (hh:mm)</li>
+<li><b>StartPrice</b>	Trading price at the start of period:	float</li>
+<li><b>MaxPrice</b>	Maximum price over the period:	float</li>
+<li><b>MinPrice</b>	Minimum price over the period:	float</li>
+<li><b>EndPrice</b>	Trading price at the end of the period:	float</li>
+<li><b>TradedVolume</b>	Total value traded:	float</li>
+<li><b>NumberOfTrades</b>	Number of distinct trades during the period:	int</li>
+</ul>
 The Deutsche Börse Public Dataset (DBG PDS) S3 bucket is available from <a href="http://s3://deutsche-boerse-xetra-pds">here</a>.
