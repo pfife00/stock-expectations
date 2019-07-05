@@ -35,7 +35,12 @@ df=orig_data[['STOCK_TICKER', 'START_PRICE', 'MAX_PRICE', 'MIN_PRICE']]
 df_valid=valid_data[['column', 'min_value', 'max_value', 'success', 'expectation_type']]
 connection.commit()
 connection.close()
-
+#min_valid = df_valid.loc[df_valid['column'] == 'MIN_PRICE', 'min_value'].iloc[0]
+#print(df_valid)
+#min_valid = df_valid.loc[2,'min_value']
+#global pmin_valid
+#pmin_valid = min_valid.item()
+#pmin_valid=5.0
 image_filename = 'ge_round.png'
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 #pull from table and pass to df
@@ -93,7 +98,7 @@ body = dbc.Container(
                             id = 'stopLabel'
                         ),
                         html.Div(
-                            dcc.Interval(id='updateTable', interval=5000, n_intervals=0),
+                            dcc.Interval(id='updateTable', interval=10000, n_intervals=0),
                         ),
 
                         html.Div(
@@ -111,7 +116,9 @@ body = dbc.Container(
                                        [
                                         {
                                         'if':{'column_id':'MIN_PRICE',
-                                              'filter_query':'{MIN_PRICE} < 12.00'
+                                            #this is hardcoded because can't pass
+                                            #variable to this statement
+                                              'filter_query':'{MIN_PRICE} < 5.0'
                                               },
                                               'backgroundColor': '#c7123f',
                                               'color': 'white',
@@ -131,7 +138,7 @@ body = dbc.Container(
                         html.H3("Success!"),
 
                         html.Div(
-                            dcc.Interval(id='updateValidTable', interval=5000, n_intervals=0),
+                            dcc.Interval(id='updateValidTable', interval=10000, n_intervals=0),
                         ),
 
                         dt.DataTable(
@@ -153,16 +160,15 @@ body = dbc.Container(
                                     },
                                     {
                                     'if':{'column_id':'MIN_PRICE',
-                                          'filter_query':'{MIN_PRICE} < 12.00'
+                                    #this is hardcoded because can't pass
+                                    #variable to this statement
+                                          'filter_query':'{MIN_PRICE} < 5.0'
                                           },
                                           'backgroundColor': '#c7123f',
                                           'color': 'white',
                                     },
                                    ],
                            data= df_valid.astype(str).to_dict('records'),
-                            ),
-                        html.Div(
-                            html.A("Great Expectations", href='https://greatexpectations.io/', target="_blank")
                             ),
                     ],
                    width = 6
@@ -217,4 +223,4 @@ def updateStockData(n):
     return df_valid.astype(str).to_dict('records')
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host = '0.0.0.0', port=5000)
+    app.run_server(debug=True, host = '0.0.0.0', port='5011')
