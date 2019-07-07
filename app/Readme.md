@@ -29,10 +29,3 @@ First import the library<br>
 
 Then run the print command<br>
 <code>print(dash_core_components.__version__)</code><br>
-
-
-
-
-```python
-
-```
