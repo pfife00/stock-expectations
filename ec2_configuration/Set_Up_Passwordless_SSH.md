@@ -35,9 +35,3 @@ paste copied text after existing key and save
 <code>nano ./.ssh/authorized_keys</code>
 
 paste copied text after existing key and save
-
-
-
-```python
-
-```
