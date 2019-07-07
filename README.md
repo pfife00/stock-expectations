@@ -61,3 +61,6 @@ Each Xetra csv file within the bucket is defined as follows<br>
 <li><b>NumberOfTrades</b>	Number of distinct trades during the period:	int</li>
 </ul>
 The Deutsche Börse Public Dataset (DBG PDS) S3 bucket is available from <a href="http://s3://deutsche-boerse-xetra-pds">here</a>.
+
+<h3>Running the program </h3>
+To run the program, please go to <a href="bigdatawork.xyz">bigdatawork.xyz</a> and click on the start button at the top left of of the page. After a few seconds, the program will start updating. To stop the program, please click the stop button.
