@@ -13,7 +13,6 @@ import json
 from pyspark.sql import SparkSession, SQLContext, Row
 import configparser
 import great_expectations as ge
-#import PostgreSQLConnect
 import psycopg2
 import pandas as pd
 from sqlalchemy import create_engine
@@ -49,9 +48,6 @@ def sendToSQL(df_orig, df_convert):
     Cache.metadata.drop_all(engine)
     CacheOrig.metadata.drop_all(engine)
 
-    #Cache.metadata.create_all(engine)
-    #CacheOrig.metadata.create_all(engine)
-
     #pass dataframe to sql
     df_convert.to_sql('validation_results', engine)
     pdsDF.to_sql('data_cache', engine)
@@ -59,27 +55,6 @@ def sendToSQL(df_orig, df_convert):
     #query table
     rows_valid = engine.execute("select * from validation_results").fetchall()
     rows_data = engine.execute("select * from data_cache").fetchall()
-
-
-    #this works but don't need it!!!
-    #connection = psycopg2.connect(host = postgres_ip, port=5432, database=DB_NAME, user=DB_USER, password=DB_PASSWORD)
-    #cursor = connection.cursor()
-    #cursor.execute('DROP TABLE IF EXISTS json_cache;')
-    #cursor.execute('DROP TABLE IF EXISTS data_table;')
-    #cursor.execute('CREATE TABLE data_table(test_json json);')
-    #cursor.execute('INSERT INTO data_table(results, success, statistics)'
-
-    #query = 'INSERT INTO data_cache VALUES (%s)'
-    #data = (test_json['results'])
-    #print(test_json['results'])
-    #for line in test_json:
-
-    #query = 'INSERT INTO data_table VALUES (%s, %s, %s)'
-    #data = (test_json['results'], test_json['success'], test_json['statistics'])
-    #cursor.execute(query, data)
-
-    #connection.commit()
-    #connection.close()
 
 def ge_validation(rdd):
     """
@@ -94,27 +69,28 @@ def ge_validation(rdd):
                                 "_7 as DATE", "_8 as TIME", "_9 as START_PRICE",
                                 "_10 as MAX_PRICE", "_11 as MIN_PRICE", "_8 as END_PRICE",
                                 "_8 as TRADED_VOLUME", "_14 as NUMBER_OF_TRADES",)
-    #df.show()
 
-    #Not sure if I need this row
+    #print out spark dataframe shape in order to determine number of messages per second
+    #print((df.count(), len(df.columns)))
+
     df = df.withColumn("MAX_PRICE", df["MAX_PRICE"].cast(FloatType()))
     df = df.withColumn("MIN_PRICE", df["MAX_PRICE"].cast(FloatType()))
 
+    #convert to GE dataframe format
     sdf = ge.dataset.SparkDFDataset(df)
+
     #print(json.dumps(sdf.expect_column_to_exist("value"))) #est, does col have value
     #print(json.dumps(sdf.expect_column_to_exist("key"))) #test, does col have key
     #print(json.dumps(sdf.expect_column_to_exist("_4"))) #test, does col have _4
-    #test_json = json.dumps(sdf.expect_column_mean_to_be_between("_4", -100, 100, result_format="SUMMARY"))
     sdf.expect_column_to_exist("MAX_PRICE", result_format="SUMMARY")
     sdf.expect_column_max_to_be_between("MAX_PRICE", 1, 500, result_format="BOOLEAN_ONLY")
-    #sdf.expect_column_values_to_be_between("START_PRICE", 0, 1000, result_format="BOOLEAN_ONLY")
-    #sdf.expect_column_values_to_be_between("START_PRICE", 0.5, 1000, result_format="SUMMARY")
     sdf.expect_column_min_to_be_between("MIN_PRICE", 5, 100, result_format="BOOLEAN_ONLY")
 
     #Save expectations to json to load to validation
     sdf.save_expectations_config("test_json.json", discard_failed_expectations=False)
     mini_batch_suite = json.load(open('test_json.json', 'r'))
 
+    #run GE validation function
     my_dict = sdf.validate(mini_batch_suite)
 
     #pass to convert to dataframe function results
@@ -152,17 +128,19 @@ def convert_df(my_dict):
     #drop more unecesary columns
     df7 = df6.drop(['result', 'kwargs', 'exception_traceback'], axis=1)
 
+    lst = [df1, df2, df3, df4, df5, df6]
+    del lst
+
     return df7
 
 def main():
     """
     Apply ETL on Spark Stream
     """
-    batch_duration = 1
+    batch_duration = 5
     topic = "stockdataset"
     #put these ips in a separate class when do code cleanup
     kafka_ips = '10.0.0.11:9092, 10.0.0.9:9093, 10.0.0.6:9094'
-    #kafka_ips = '10.0.0.11:9092'
     #Initiate spark session
     spark_session = SparkSession \
         .builder \
@@ -178,12 +156,10 @@ def main():
     #read from kafka
     kafkaStream = KafkaUtils\
             .createDirectStream(ssc, [topic], {'metadata.broker.list': kafka_ips})
-#
+
     sqlContext = SQLContext(sc)
-    #window the data
-    #kafkaStream_window = kafkaStream.window(100)
+
     #parse the row into separate components
-    #filteredStream = kafkaStream_window.map(lambda line: line[1].split("^"))
     filteredStream = kafkaStream.map(lambda line: line[1].split("^"))
 
     filteredStream.foreachRDD(ge_validation)
