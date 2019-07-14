@@ -5,6 +5,10 @@
 ![StockExpectations](https://user-images.githubusercontent.com/17607212/60687481-b52bac80-9e63-11e9-8b01-775a46686e66.jpg)
 
 
+<h3>Project Presentation</h3>
+The project's presentation can be viewed <a href="http://bit.ly/StockExpectations-5min">here</a>.
+
+
 <h3>Project Description</h3>
 There is an inherent belief in the stock mark that the price of stocks should fully
 reflect all available data. However, what if that data is flawed? What if there are 
