@@ -70,18 +70,13 @@ def ge_validation(rdd):
                                 "_10 as MAX_PRICE", "_11 as MIN_PRICE", "_8 as END_PRICE",
                                 "_8 as TRADED_VOLUME", "_14 as NUMBER_OF_TRADES",)
 
-    #print out spark dataframe shape in order to determine number of messages per second
-    #print((df.count(), len(df.columns)))
-
     df = df.withColumn("MAX_PRICE", df["MAX_PRICE"].cast(FloatType()))
     df = df.withColumn("MIN_PRICE", df["MAX_PRICE"].cast(FloatType()))
 
     #convert to GE dataframe format
     sdf = ge.dataset.SparkDFDataset(df)
 
-    #print(json.dumps(sdf.expect_column_to_exist("value"))) #est, does col have value
-    #print(json.dumps(sdf.expect_column_to_exist("key"))) #test, does col have key
-    #print(json.dumps(sdf.expect_column_to_exist("_4"))) #test, does col have _4
+    #apply expectations
     sdf.expect_column_to_exist("MAX_PRICE", result_format="SUMMARY")
     sdf.expect_column_max_to_be_between("MAX_PRICE", 1, 500, result_format="BOOLEAN_ONLY")
     sdf.expect_column_min_to_be_between("MIN_PRICE", 5, 100, result_format="BOOLEAN_ONLY")
